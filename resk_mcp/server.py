@@ -531,6 +531,9 @@ class SecureMCPServer(FastMCP):
             uri = path_pattern
         elif uri is None and path_pattern is None:
             raise ValueError("Either 'uri' or 'path_pattern' must be provided")
+        
+        # At this point, uri cannot be None due to the checks above
+        assert uri is not None, "URI cannot be None at this point"
             
         decorator = super().resource(uri, name=name, description=description, mime_type=mime_type, **kwargs)
         def actual_decorator(func: Callable) -> Callable:
