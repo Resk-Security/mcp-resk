@@ -1,0 +1,99 @@
+# config.yaml
+# Main configuration for RESK-MCP
+# Environment variables take precedence over these settings if defined.
+
+# --- Security Settings ---
+jwt:
+  # Secret key for signing JWT tokens - REQUIRED
+  # Can be overridden by the JWT_SECRET environment variable
+  secret: "test-secret-key-for-development"
+  
+  # Signature algorithm used for JWT
+  # HS256 is recommended for most use cases
+  algorithm: "HS256"  
+  
+  # JWT token validity duration in minutes
+  # A lower value improves security but requires more frequent reconnections
+  expiration_minutes: 30
+
+# --- Rate Limiting ---
+rate_limit:
+  # Format: number/period (e.g.: "100/minute", "5/second", "1000/hour")
+  # Controls the maximum number of requests allowed per user/IP
+  # Can be overridden by the RATE_LIMIT environment variable
+  default: "100/minute"
+
+# --- Context Management ---
+context:
+  # Maximum approximate number of tokens allowed per request
+  # Limits the size of requests to prevent resource abuse
+  # Can be overridden by the MAX_TOKEN_PER_REQUEST environment variable
+  max_tokens: 4000
+  
+  # Approximate characters per token for token estimation
+  # Helps with token count approximation when validating context limits
+  chars_per_token_approx: 4
+
+# --- Server Configuration ---
+server:
+  # Server listening address
+  # 0.0.0.0 allows connections from all interfaces
+  # For more security in production environments, use 127.0.0.1
+  host: "0.0.0.0"
+  
+  # Server listening port
+  # 8001 is used to avoid conflicts with other common services
+  port: 8001
+  
+  # SSL/TLS configuration for HTTPS - RECOMMENDED in production
+  # Uncomment and specify paths to your certificates for HTTPS
+  # Can be overridden by the SSL_KEYFILE and SSL_CERTFILE environment variables
+  # For development, comment these out to use HTTP instead
+  # ssl_keyfile: "./key.pem"
+  # ssl_certfile: "./cert.pem"
+
+# --- Logging --- 
+logging:
+  # Available levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  # Can be overridden by the LOG_LEVEL environment variable
+  # DEBUG is more verbose but useful in development
+  # INFO is recommended for most production environments
+  level: "INFO"
+
+# --- Content Validation ---
+validation:
+  # Personal information (PII) detection level
+  # "strict": blocks any request containing potentially sensitive information
+  # "moderate": blocks only information clearly identified as sensitive
+  # "off": disables detection (not recommended in production)
+  pii_detection_level: "moderate"
+  
+  # Protection against prompt injection
+  # Enables detection of injection attempts or circumvention of restrictions
+  prompt_injection_detection: true
+  
+  # Prompt injection detection models to use
+  # List of detection methods to apply when analyzing requests
+  prompt_injection_models: ["basic_keywords", "advanced_heuristic"]
+
+# --- Dashboard Settings ---
+dashboard:
+  # Authentication for the dashboard
+  auth:
+    # Enable authentication for dashboard
+    enabled: true
+    # Default username for dashboard access
+    username: "admin"
+    # Default password for dashboard access
+    password: "admin"
+    # Session expiration time in minutes
+    session_expire_minutes: 60
+
+# --- External Integrations ---
+integrations:
+  # Parameters for integration with external services
+  # Define endpoints and credentials according to your needs
+  external_api:
+    enabled: false
+    url: "https://api.example.com/v1"
+    timeout_seconds: 5

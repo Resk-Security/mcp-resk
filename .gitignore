@@ -1,0 +1,39 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env 
+venv-resk-mcp/
+
+.python-version
+# Logs
+logs/*
+*.log
+*.log.*
+*.log.*.*
+
+.__pycache__
+
+# PyInstaller
+*.spec
+
+# PyInstaller
+*pytest_cache*
+
+# Pytest
+.pytest_cache
+
+# Pytest
+*pytest_cache*
+
+
+# tests files
+test_client.py
+test_dev.py
+example_client.py 

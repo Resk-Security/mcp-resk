@@ -1,0 +1,14 @@
+mcp>=1.9.0
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pyjwt[crypto]>=2.8.0
+pydantic>=2.0.0
+pytest>=7.0.0
+python-dotenv>=1.0.0
+requests>=2.0.0
+slowapi>=0.1.9
+PyYAML>=6.0
+types-PyYAML>=6.0.0
+resk-llm>=0.5.0
+sentence-transformers>=2.2.2
+jsonschema>=4.17.0
