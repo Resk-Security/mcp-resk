@@ -37,6 +37,8 @@ jobs:
         uv venv
         # Install all dependencies including dev dependencies
         uv pip install -e ".[dev]"
+        # Install additional testing dependencies
+        uv pip install jsonschema resk-llm
     
     - name: Lint with flake8
       run: |
