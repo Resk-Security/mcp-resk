@@ -18,24 +18,6 @@ import resk_mcp.config as resk_mcp_config # To mock global settings
 from resk_mcp.validation import detect_pii, detect_prompt_injection
 import resk_mcp.dashboard as resk_mcp_dashboard # Import dashboard to patch settings
 
-# -------------------------------------------------------------------------
-# NOTE: Authentication Test Strategy
-# -------------------------------------------------------------------------
-# Due to differences in environment configuration between local testing and 
-# CI environment, tests that require JWT authentication are skipped. 
-# Multiple approaches were tried to solve this issue:
-# 1. Using a fixed JWT secret in both environments
-# 2. Monkey-patching the verify_jwt_token function
-# 3. Replacing the endpoint handler
-#
-# However, none of these consistently worked across all environments.
-# Tests that don't require authentication (e.g., no-auth and bad-token tests)
-# are still executed to ensure basic server functionality.
-# -------------------------------------------------------------------------
-
-# Test bypass for authentication in test environment
-BYPASS_AUTH_FOR_TESTS = os.environ.get("BYPASS_AUTH_FOR_TESTS", "true").lower() in ("true", "1", "yes")
-
 # Remove old TEST_JWT_SECRET, it will come from mocked settings
 TEST_USER_ID = "test_server_user@example.com"
 ANOTHER_TEST_USER_ID = "another_user@example.com"
@@ -54,7 +36,7 @@ def extract_value(result):
         return result[0]['text']
     return result
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def test_settings():
     """Create test settings without using monkeypatch."""
     # Use a fixed secret for tests to ensure consistency in CI environment
@@ -93,58 +75,70 @@ def test_settings():
     }
     return Settings(config_data)
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def fixed_jwt_secret():
     """Fixed JWT secret for test consistency."""
     return "test-secret-for-server-tests"
 
-@pytest.fixture(scope="module")
-def secure_server_instance(test_settings):
-    """Create a test server instance using the test settings."""
-    # Store original settings to restore later
+@pytest.fixture(scope="function")
+def secure_server_instance(test_settings, mocker):
+    """Create a test server instance using the test settings and mock JWT verification."""
     original_settings = resk_mcp_config.settings
-    
-    # Set the test settings
     resk_mcp_config.settings = test_settings
-    resk_mcp_dashboard.settings = test_settings  # Patch dashboard settings
-    
-    # Override specific settings for the test server
-    test_settings.rate_limit = "2/second"
-    test_settings.max_token_per_request = 50  # Test with a small context limit
-    test_settings.dashboard_auth_enabled = False  # Ensure dashboard auth is disabled for tests
+    resk_mcp_dashboard.settings = test_settings
 
-    # Create the server
+    # Define a more specific mock for verify_jwt_token
+    def sophisticated_mock_verify(token_str, *args, **kwargs):
+        # These are the structurally valid tokens from our fixtures
+        valid_test_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoidGVzdF91c2VyQGV4YW1wbGUuY29tIiwiZXhwIjoyMTQ3NDgzNjQ3fQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        another_valid_test_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYW5vdGhlcl91c2VyQGV4YW1wbGUuY29tIiwiZXhwIjoyMTQ3NDgzNjQ3fQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        
+        if token_str == valid_test_token:
+            return {"user_id": TEST_USER_ID, "exp": 2147483647}
+        elif token_str == another_valid_test_token:
+            return {"user_id": ANOTHER_TEST_USER_ID, "exp": 2147483647}
+        elif token_str == "invalid_token": # Specifically for the fallback test
+            raise AuthError("Simulated invalid token for fallback test")
+        else: # Default for any other token during tests if necessary
+            # This case might need adjustment based on other tests, 
+            # but for now, we can assume other tests use the valid ones or skip auth.
+            # If other tests send different tokens and expect success, they might fail here.
+            # For now, let's be strict and only allow our known test tokens or fail.
+            raise AuthError(f"Sophisticated mock received unexpected token: {token_str}")
+
+    mocker.patch('resk_mcp.server.verify_jwt_token', side_effect=sophisticated_mock_verify)
+    
+    test_settings.rate_limit = "2/second"
+    test_settings.max_token_per_request = 50
+    test_settings.dashboard_auth_enabled = False
+
     server = SecureMCPServer(name="TestSecureServer")
     
-    # Register a test tool - in MCP v1.9.0, the tool name format might be different
-    # We'll handle both formats in our implementation
     @server.tool(name="test/tool")
     async def sample_tool(param1: str, param2: int) -> Dict[str, Any]:
-        """Sample tool for testing."""
         return {"message": f"Tool executed with {param1} and {param2}", "sum": param2 + len(param1)}
 
     @server.resource(path_pattern="test/resource/{item_id}")
     async def sample_resource(item_id: str) -> Dict[str, str]:
-        """Sample resource for testing."""
         return {"item_id": item_id, "data": "Sample resource data"}
     
     yield server
     
-    # Restore original settings after tests
     resk_mcp_config.settings = original_settings
-    resk_mcp_dashboard.settings = original_settings  # Restore dashboard settings
+    resk_mcp_dashboard.settings = original_settings
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def test_token():
-    """Create a dummy test token - auth is being bypassed for tests."""
-    return "dummy_test_token_for_testing"
+    """Create a JWT-like token for testing. Signature doesn't matter since we mock verification."""
+    # This is a structurally valid (but not necessarily signature-valid) JWT
+    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoidGVzdF91c2VyQGV4YW1wbGUuY29tIiwiZXhwIjoyMTQ3NDgzNjQ3fQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def another_test_token():
-    """Create another dummy test token - auth is being bypassed for tests."""
-    return "another_dummy_test_token_for_testing"
+    """Create another JWT-like token for testing."""
+    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYW5vdGhlcl91c2VyQGV4YW1wbGUuY29tIiwiZXhwIjoyMTQ3NDgzNjQ3fQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def client(secure_server_instance):
     # The FastMCP app is at secure_server_instance.app or secure_server_instance.secure_app
     return TestClient(secure_server_instance.secure_app)
@@ -188,8 +182,8 @@ def test_mcp_secure_endpoint_bad_token(client):
 
 def test_mcp_secure_endpoint_success(client, test_token, secure_server_instance):
     """Test MCP endpoint with a valid request."""
-    print("\nNOTE: Auth verification issues in tests - skipping authentication-dependent tests")
-    pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
+    # print("\nNOTE: Auth verification issues in tests - skipping authentication-dependent tests")
+    # pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
     
     # Send a request to the secure MCP endpoint
     response = client.post(
@@ -249,7 +243,7 @@ def test_mcp_secure_endpoint_invalid_payload_structure(client, test_token):
 
 def test_mcp_secure_endpoint_pii_detected(client, test_token):
     """Test MCP endpoint with PII detection."""
-    pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
+    # pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
     
     # Mock the detect_pii function to always return True        
     with patch('resk_mcp.server.detect_pii', return_value=True):
@@ -272,7 +266,7 @@ def test_mcp_secure_endpoint_pii_detected(client, test_token):
 
 def test_mcp_secure_endpoint_prompt_injection_detected(client, test_token):
     """Test MCP endpoint with prompt injection detection."""    
-    pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
+    # pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
     
     # Mock the detect_prompt_injection function to always return True
     with patch('resk_mcp.server.detect_prompt_injection', return_value=True):
@@ -295,7 +289,7 @@ def test_mcp_secure_endpoint_prompt_injection_detected(client, test_token):
 
 def test_mcp_secure_endpoint_context_limit_exceeded(client, test_token):
     """Test MCP endpoint with context limit exceeded."""        
-    pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
+    # pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
     
     # Nous devons patcher la méthode is_within_limits directement car context_manager
     # est une instance privée dans le serveur
@@ -402,7 +396,7 @@ def test_dashboard_html_route(client):
 
 def test_dashboard_api_interactions_route(client, test_token, secure_server_instance):
     """Test the dashboard API interactions endpoint."""
-    pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
+    # pytest.skip("Skipping tests that require JWT auth due to environment differences between local and CI")
     
     # First make a tool call to have some interactions
     response = client.post(
@@ -418,6 +412,9 @@ def test_dashboard_api_interactions_route(client, test_token, secure_server_inst
     # Check if the request was successful before continuing     
     assert response.status_code == 200
     data = response.json()
+    
+    # Ensure no error before proceeding to dashboard check
+    assert "error" not in data, f"Tool call failed unexpectedly: {data.get('error')}"
 
     # Now check the dashboard API
     response = client.get("/api/dashboard/interactions")        

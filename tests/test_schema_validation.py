@@ -83,7 +83,7 @@ def test_validate_parameters_no_schema(validator):
     assert result == params  # Should return params as-is without validation
 
 
-class TestPydanticModel(BaseModel):
+class PydanticModelForTest(BaseModel):
     """Test Pydantic model for testing schema generation."""
     name: str
     age: int
@@ -92,7 +92,7 @@ class TestPydanticModel(BaseModel):
 
 def test_generate_schema_from_model():
     """Test generating a JSON schema from a Pydantic model."""
-    schema = generate_schema_from_model(TestPydanticModel)
+    schema = generate_schema_from_model(PydanticModelForTest)
     
     assert schema["type"] == "object"
     assert "properties" in schema
