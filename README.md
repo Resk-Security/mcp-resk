@@ -1,9 +1,18 @@
 # RESK-MCP: Secure Model Context Protocol Layer
 
+[![PyPI version](https://img.shields.io/pypi/v/mcp-resk.svg)](https://pypi.org/project/mcp-resk/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/mcp-resk.svg)](https://pypi.org/project/mcp-resk/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Repo](https://img.shields.io/badge/GitHub-Resk--Security%2Fmcp--resk-blue?logo=github)](https://github.com/Resk-Security/mcp-resk)
+[![Downloads](https://static.pepy.tech/badge/mcp-resk)](https://pepy.tech/project/mcp-resk)
+[![GitHub issues](https://img.shields.io/github/issues/Resk-Security/mcp-resk.svg)](https://github.com/Resk-Security/mcp-resk/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/Resk-Security/mcp-resk?style=social)](https://github.com/Resk-Security/mcp-resk/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/Resk-Security/mcp-resk?style=social)](https://github.com/Resk-Security/mcp-resk/network/members)
+[![Documentation Status](https://readthedocs.org/projects/mcp-resk/badge/?version=latest)](https://mcp-resk.readthedocs.io/en/latest/?badge=latest)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+[![GitHub last commit](https://img.shields.io/github/last-commit/Resk-Security/mcp-resk.svg)](https://github.com/Resk-Security/mcp-resk/commits/main)
+[![PyPI - Implementation](https://img.shields.io/pypi/implementation/mcp-resk.svg)](https://pypi.org/project/mcp-resk/)
+[![LLM Security](https://img.shields.io/badge/LLM%20Security-Enhanced-brightgreen.svg)](https://github.com/Resk-Security/mcp-resk)
 
 RESK-MCP is an open-source Python library that adds a robust security and management layer over the official [Model Context Protocol (MCP) Python SDK](https://github.com/modelcontextprotocol/python-sdk). It provides enhanced security features, monitoring capabilities, and tools for managing MCP interactions.
 
