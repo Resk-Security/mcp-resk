@@ -34,7 +34,7 @@ RESK-MCP is an open-source Python library that adds a robust security and manage
 ## Installation
 
 ```bash
-pip install resk-mcp
+pip install mcp-resk
 ```
 
 ```bash
