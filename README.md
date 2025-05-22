@@ -46,6 +46,8 @@ uv pip install -e .
 uv pip install -e ".[dev]"
 ```
 
+> **Note**: We use [uv](https://github.com/astral-sh/uv) as the recommended package installer because it's significantly faster than pip and provides better dependency resolution. It's also used in our CI/CD workflow.
+
 ## Configuration
 
 Create a `.env` file in your project root:
@@ -159,6 +161,17 @@ resk-mcp/
 └── README.md
 ```
 
+## CI/CD Workflow
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **Automated Testing**: All pushes and PRs to the `main` branch trigger tests on Python 3.9 and 3.10
+- **Code Quality**: Includes linting with flake8 and type checking with mypy
+- **Package Publishing**: Tagged versions (format `v*`) are automatically published to PyPI
+- **Release Creation**: GitHub Releases are automatically created for each tagged version
+
+The workflow configuration is defined in `.github/workflows/python-package.yml`.
+
 ## Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -168,6 +181,8 @@ Contributions are welcome! Please follow these steps:
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to your branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+> **Note**: This project uses `main` as the default branch. All PRs should be made against the `main` branch.
 
 ## License
 
