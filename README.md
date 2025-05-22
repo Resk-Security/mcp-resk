@@ -133,6 +133,110 @@ if __name__ == "__main__":
         server.run_server(port=8001)
 ```
 
+## Troubleshooting
+
+### JWT Authentication: "Signature verification failed"
+
+If you encounter `WARNING:resk_mcp.server:Authentication failed for /mcp_secure: Invalid token: Signature verification failed` errors when running test_client.py against example_server.py, it means the JWT (JSON Web Token) sent by the client could not be verified by the server. This almost always indicates a mismatch in the JWT_SECRET used to sign the token (client-side or how the token was originally generated) and the JWT_SECRET used by the server to verify it.
+
+#### How JWT Authentication is Setup in this Example:
+
+**Server-Side (example_server.py):**
+
+- The server relies on a JWT_SECRET for signing and verifying tokens.
+- This secret is primarily configured via a .env file at the root of the project. The resk_mcp/config.py module loads this secret into the application's settings (settings.jwt_secret).
+- When example_server.py starts, it generates a test JWT using this settings.jwt_secret and prints it to the console. This is the token your test_client.py should be using.
+
+**Client-Side (test_client.py):**
+
+- The test_client.py has a hardcoded AUTH_TOKEN variable.
+- This token is sent in the Authorization header for requests to the secure MCP endpoint.
+
+#### The Mismatch:
+
+The "Signature verification failed" error occurs if the AUTH_TOKEN in test_client.py was not generated using the exact same JWT_SECRET that example_server.py is currently configured with (via its .env file).
+
+#### How to Fix It:
+
+**Ensure JWT_SECRET is Configured for the Server:**
+
+1. Create a file named .env in the root directory of this project (e.g., alongside example_server.py).
+2. Add your desired secret key to it:
+   ```
+   JWT_SECRET="your_very_strong_and_unique_secret_key_here"
+   ```
+3. Important: If you change this secret, any previously generated tokens (including the one in test_client.py) will become invalid.
+
+**Run the Server (example_server.py):**
+
+Execute `python example_server.py`.
+
+**Copy the Correct Token from Server Logs:**
+
+1. Look for a log message from the server similar to this:
+   ```
+   INFO:example-server:Token de test généré (utilisant JWT_SECRET du .env): eyJhbGciOiJIUzI1NiI...[long_token_string]...
+   ```
+   (The message might be slightly different if you changed the log language/format, but it will contain the generated token.)
+2. Carefully copy the entire token string (it's usually very long).
+
+**Update test_client.py:**
+
+1. Open test_client.py.
+2. Find the line:
+   ```python
+   AUTH_TOKEN = "some_old_or_incorrect_token_here"
+   ```
+3. Replace the old token string with the new token you just copied from the server logs.
+   ```python
+   AUTH_TOKEN = "eyJhbGciOiJIUzI1NiI...[the_new_long_token_string_you_copied]..."
+   ```
+
+**Run the Client (test_client.py):**
+
+Now, execute `python test_client.py`.
+The authentication errors should be gone, and your client should be able to communicate with the server successfully.
+
+**Key Takeaway:** The AUTH_TOKEN used by the client must be a token that was signed with the exact same JWT_SECRET that the server is currently using for verification. The easiest way to ensure this in this example setup is to always use the token printed by example_server.py on startup.
+
+## Detailed Configuration
+
+RESK-MCP uses environment variables for configuration. Create a `.env` file in the root of your project with the following (at a minimum):
+
+```env
+# .env
+JWT_SECRET="your-super-secure-jwt-secret-key-here"
+
+# Rate Limiting (default: "100/minute")
+# Examples: "5/second", "1000/hour", "20/day"
+RATE_LIMIT="100/minute"
+
+# Optional for HTTPS:
+# SSL_KEYFILE="./key.pem"
+# SSL_CERTFILE="./cert.pem"
+
+# Optional for context management and logging:
+# MAX_TOKEN_PER_REQUEST="4000"
+# LOG_LEVEL="INFO"
+```
+
+- **JWT_SECRET**: A strong, random secret key for signing JWT tokens. This is critical for security.
+- **RATE_LIMIT**: Defines the rate limit for requests. The format is count/period (e.g., 100/minute, 5/second). Defaults to 100/minute. Rate limiting is primarily based on the user_id from the JWT, falling back to IP address if the token is invalid or missing.
+- **SSL_KEYFILE**: Path to your SSL private key file (e.g., key.pem).
+- **SSL_CERTFILE**: Path to your SSL certificate file (e.g., cert.pem).
+- **MAX_TOKEN_PER_REQUEST**: Approximate maximum tokens allowed per request (default: 4000).
+- **LOG_LEVEL**: Logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL, default: INFO).
+
+### Generating SSL Certificates (for HTTPS)
+
+For local development, you can generate self-signed certificates using OpenSSL:
+
+```bash
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365 -nodes -subj "/CN=localhost"
+```
+
+For production, obtain certificates from a trusted Certificate Authority (CA) like Let's Encrypt.
+
 ## Dashboard
 
 Access the analytics dashboard at `http://localhost:8001/dashboard`. It provides:
