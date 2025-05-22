@@ -16,7 +16,9 @@
 
 RESK-MCP is an open-source Python library that adds a robust security and management layer over the official [Model Context Protocol (MCP) Python SDK](https://github.com/modelcontextprotocol/python-sdk). It provides enhanced security features, monitoring capabilities, and tools for managing MCP interactions.
 
+
 ## Features
+
 
 - **JWT Authentication**: Secure MCP server endpoints with JSON Web Tokens
 - **Input Validation**: Validate all incoming MCP requests using Pydantic
