@@ -2,11 +2,11 @@ name: Python Package CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     tags:
       - 'v*'  # Run workflow on version tags, e.g. v1.0.0
   pull_request:
-    branches: [main]
+    branches: [master]
 
 # Remove id-token permission, keep contents: write for GH Release
 permissions:
